@@ -9,9 +9,9 @@ def start_pump():
 
     i=0
     while i < 20:
-            GPIO.output(24, 1)  # set GPIO24 to 1/GPIO.HIGH/True
+            GPIO.output(18, 1)  # set GPIO24 to 1/GPIO.HIGH/True
             sleep(0.5)  # wait half a second
-            GPIO.output(24, 0)  # set GPIO24 to 0/GPIO.LOW/False
+            GPIO.output(18, 0)  # set GPIO24 to 0/GPIO.LOW/False
             sleep(0.5)  # wait half a second
             i = i+1
 
