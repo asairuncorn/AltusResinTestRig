@@ -16,7 +16,7 @@
       overflow: hidden; /* Prevent scrolling */
       display: flex;
       flex-direction: column;
-      background-image: url('background.jpg'); /* Background image */
+      background-image: url('/background.jpg'); /* Background image */
       background-size: cover; /* Ensure the image covers the whole area */
       background-position: center; /* Center the image */
       background-repeat: no-repeat; /* Prevent tiling */
@@ -197,7 +197,7 @@
         </div>
       </div>
       <div class="button-container">
-        <button class="button start-btn" onclick="startProgress(2)">Start</button>
+        <button class="button start-btn" onclick="startProgress(2); startPomp(2)">Start</button>
         <button class="button stop-btn" onclick="stopProgress(2)">Stop</button>
       </div>
       <button class="button seal-btn" onclick="setTime(2)">Set Time</button>
@@ -215,7 +215,7 @@
         </div>
       </div>
       <div class="button-container">
-        <button class="button start-btn" onclick="startProgress(3); sendMessage(3)">Start</button>
+        <button class="button start-btn" onclick="startProgress(3); startPomp(3)">Start</button>
         <button class="button stop-btn" onclick="stopProgress(3)">Stop</button>
       </div>
       <button class="button seal-btn" onclick="setTime(3)">Set Time</button>
@@ -233,7 +233,7 @@
         </div>
       </div>
       <div class="button-container">
-        <button class="button start-btn" onclick="startProgress(4); sendMessage(5)">Start</button>
+        <button class="button start-btn" onclick="startProgress(4); startPomp(4)">Start</button>
         <button class="button stop-btn" onclick="stopProgress(4)">Stop</button>
       </div>
       <button class="button seal-btn" onclick="setTime(4)">Set Time</button>
@@ -262,7 +262,15 @@
 
       socket.on('server_response', (data) => {
         console.log("Message from server:", data.message);
-        document.getElementById('status1').textContent = data.message;
+        const buttonId = data.button_id;
+        document.getElementById(`status${buttonId}`).textContent = data.message;
+        //alert(`Server response: ${data.message}`);
+      });
+
+      socket.on('pressure_sensor_reading_1', (data) => {
+        console.log('presure_sensor_reading_1', data.message);
+        //const buttonId = data.button_id;
+        document.getElementById(`pressure1`).textContent = data.message;
         //alert(`Server response: ${data.message}`);
       });
 
@@ -280,15 +288,7 @@
     //   }
     // }
 
-    function startPomp(buttonId) {
-      if (socket && socket.connected) {
-        socket.emit('start_pump', { buttonId });
 
-
-      } else {
-        console.error("Socket is not connected.");
-      }
-    }
 
     // Send button press events with unique IDs to Flask server
     // function startProgress(buttonId) {
@@ -364,6 +364,17 @@
 
         }
       }, intervalTime); // Update based on interval tme
+    }
+
+    function startPomp(blockId) {
+        const proces_time = progressTimes[blockId - 1];
+        if (socket && socket.connected) {
+        socket.emit('start_pump', { blockId, proces_time });
+
+
+      } else {
+        console.error("Socket is not connected.");
+      }
     }
 
     function stopProgress(blockId) {

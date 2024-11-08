@@ -1,6 +1,7 @@
 from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
-from rp_controler import start_pump
+from sensor import *
+from rp_controler import*
 import os
 import threading
 import time
@@ -22,14 +23,21 @@ def countdown_timer(button_id, duration=10):
     seconds = duration
     while seconds > 0:
         # Emit remaining time to the client
-        socketio.emit('server_response', {'message': f'Time remaining for Button {button_id}: {seconds} seconds'} )
-        print(f"Time remaining for Button {button_id}: {seconds} seconds")  # Print for server logging
+        socketio.emit('server_response', {'message': f'Time remaining for pump {button_id}: {seconds} s', 'button_id': button_id} )
+        sensor_1 = pressure_sensor_1()
+
+
+        socketio.emit('pressure_sensor_reading_1',
+                      {'message': sensor_1})
+        print(f"Time remaining for bay {button_id}: {seconds} seconds")  # Print for server logging
         socketio.sleep(1)  # Non-blocking wait
         seconds -= 1
 
+
     # Notify client when time is up
-    socketio.emit('server_response', {'message': f"Time's up for Button {button_id}!"})
-    print(f"Time's up for Button {button_id}!")
+    socketio.emit('server_response', {'message': f"Pump is stopping... {button_id}!"})
+    stop_pomp(button_id)
+    print(f"Pump {button_id} stopped!")
 
 
 # Event handler for button presses
@@ -45,13 +53,15 @@ def handle_button_press(data):
 
 @socketio.on('start_pump')
 def handle_pump(data):
-    pump_thread = threading.Thread(target=start_pump)
+    print("opis",data.get("blockId"))
+    print('proces_time', data.get('proces_time'))
+    pump_thread = threading.Thread(target=start_pump, args=(data.get("blockId"), data.get('proces_time')))
     pump_thread.start()
     print("Pump started:", data)  # Log incoming data for debugging
-    button_id = data.get("buttonId")
+    button_id = data.get("blockId")
     print("Button press event received:", button_id)
 
-    countdown_timer(button_id, duration=10)
+    countdown_timer(button_id, data.get('proces_time'))
 
     duration = data.get('duration', 10)  # Default to 10 seconds if not specified
 
@@ -127,25 +137,3 @@ if __name__ == '__main__':
     print("Starting Flask-SocketIO server...")
     socketio.run(app, host='127.0.0.1', port=5005, debug=True)
 
-# from flask import Flask, render_template
-# from flask_socketio import SocketIO
-# from flask_cors import CORS
-#
-# app = Flask(__name__)
-# CORS(app)  # Enable CORS for all routes
-# socketio = SocketIO(app, cors_allowed_origins="*")  # Enable CORS for Socket.IO
-#
-# # Route to serve your HTML page
-# @app.route('/')
-# def index():
-#     return render_template('index.html')
-#
-# # Handle button press events from the client
-# @socketio.on('button_press')
-# def handle_button_press(data):
-#     block_id = data['block_id']
-#     button_type = data['button_type']
-#     print(f"Button pressed in Block {block_id}: {button_type}")
-#
-# if __name__ == '__main__':
-#     socketio.run(app, debug=True, port=5555)
